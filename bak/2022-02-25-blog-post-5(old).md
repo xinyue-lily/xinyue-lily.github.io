@@ -10,7 +10,7 @@ title: Blog Post 5
 
 ## Tensorflow
 
-TensorFlow is a powerful google product and it's one of the most important tools for image classification. In the Blog Post 5, we tried to learn some new skills and concepts related to image classficaition in Tensorflow which worked in Google Colab. When training my model, enabling GPU lead to significant speed benefits.
+The Blog Post 5 is working in Google Colab. When training my model, enabling GPU lead to significant speed benefits.
 
 ## The Task
 Classify cats and dogs
@@ -28,19 +28,20 @@ This is the link to my github respository. [https://github.com/xinyudong1129/Blo
 
 [Building powerful image classification models using very little data](https://blog.keras.io/building-powerful-image-classification-models-using-very-little-data.html)
 
-## 1. Load Packages and Obtain Data
+## Load Packages and Obtain Data
 
-### (a) Load Packages
+Load Packages
 
 ```python
+
 import os
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models,utils
 from tensorflow.keras.preprocessing import image_dataset_from_directory
+
 ```
-### (b) construct three datasets
 
 We'll use the dataset provided by the Tensorflow team that contains labeled images of cats and dogs.
 
@@ -77,6 +78,7 @@ validation_dataset = utils.image_dataset_from_directory(validation_dir,
 val_batches = tf.data.experimental.cardinality(validation_dataset)
 test_dataset = validation_dataset.take(val_batches // 5)
 validation_dataset = validation_dataset.skip(val_batches // 5)
+
 ```
 We constructed three datasets: training_dataset, validation_dataset and test_dataset using image_dataset_from_directory.
 
@@ -88,65 +90,49 @@ Found 2000 files belonging to 2 classes.
 Found 1000 files belonging to 2 classes.
 ```
 
-### (c) Check Label Frequencies
-
-Compute the number of images in the training data with label 0 corresponding to “cat” and label 1 corresponding to “dog”.
-```python
-labels_iterator= train_dataset.unbatch().map(lambda image, label: label).as_numpy_iterator()
-sum(labels_iterator)
-```
-```python
-1000
-```
-We get 1000, means there are 1000 dogs in total. And the rest are cats.
-
-### (d) Read the data rapidly
-
 The following code is the technical code related to rapidly reading data provided by the professor.
 
 ```python
+
 AUTOTUNE = tf.data.AUTOTUNE
 train_dataset = train_dataset.prefetch(buffer_size=AUTOTUNE)
 validation_dataset = validation_dataset.prefetch(buffer_size=AUTOTUNE)
 test_dataset = test_dataset.prefetch(buffer_size=AUTOTUNE)
+
 ```
-### (e) Visualiazation of images
-
-<<<<<<< HEAD
-We can get a piece of a dataset using the *take* method. I will retrieve one batch(32 images with labels) from the training dataset.
-=======
+## 1.Visualiazation of images
 We can get a piece of a dataset using the *take* method; will retrieve one batch(32 images with labels) from the training dataset.
->>>>>>> d6f0f57feefc0dbfb79f4cb0a81217c4ff5d89dd
 
-I created a two-row visualizaiton. In the first row, show three random pictures of cats, in the second row, show three random pictures of dogs. Here's my code.
+We try to create a two-row visualizaiton. In the first row, show three random pictures of cats. In the second row, show three random pictures of dogs. Here's my code.
 
 ```python
-def plot_iamges():
-    cat = 0
-    dog = 0
-    plt.figure(figsize=(10, 6))
-    for images, labels in train_dataset.take(1):
-        for i in range(32):
-        if labels[i].numpy().astype("uint8")==0 and cat < 3:
-            cat = cat + 1
-            ax = plt.subplot(2, 3, cat)
-            plt.imshow(images[i].numpy().astype("uint8"))
-            plt.title("cat")
-        elif labels[i].numpy().astype("uint8")==1 and dog < 3:
-            dog = dog + 1
-            ax = plt.subplot(2, 3, dog+3)
-            plt.imshow(images[i].numpy().astype("uint8"))
-            plt.title("dog")
-            plt.axis("off")
-        if cat >= 3 and dog >= 3:
-            break
 
-plot_images()
+cat = 0
+dog = 0
+plt.figure(figsize=(10, 6))
+for images, labels in train_dataset.take(1):
+  for i in range(32):
+    if labels[i].numpy().astype("uint8")==0 and cat < 3:
+      cat = cat + 1
+      ax = plt.subplot(2, 3, cat)
+      plt.imshow(images[i].numpy().astype("uint8"))
+      plt.title("cat")
+     
+    elif labels[i].numpy().astype("uint8")==1 and dog < 3:
+      dog = dog + 1
+      ax = plt.subplot(2, 3, dog+3)
+      plt.imshow(images[i].numpy().astype("uint8"))
+      plt.title("dog")
+    plt.axis("off")
+    if cat >= 3 and dog >= 3:
+      break
+
 ```
+Here's the resutls.
 
 ![PIC1.png](https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/pic1_cat_dog.png)
 
-## 2. First Model-Model1
+## 2. First Model
 
 We create a *tf.keras.Sequential* model named model1, which include two *Conv2D* layers, two *MaxPooling2D* layers, one *Flatten* layer, one *Dense* layer, one *Dropout* layer.
 
@@ -173,6 +159,7 @@ model1.compile(optimizer='adam',
 history = model1.fit(train_dataset, 
            epochs=20, 
            validation_data=(validation_dataset))
+
 ```
 Here's the history of the accuracy on both the training and vailidation sets.
 
@@ -239,11 +226,8 @@ Epoch 20/20
         - accuracy: 0.9395 - val_loss: 3.0805 - val_accuracy: 0.6361
 ```
 
-<<<<<<< HEAD
-Plot the history of model1, including the training and validation performance.
-=======
+The validation accuracy of model1 stabilized between **56% to 64%** during training, better than the baseline.
 plot the history of model1, including the training and validation performance.
->>>>>>> d6f0f57feefc0dbfb79f4cb0a81217c4ff5d89dd
 
 ```python
 plt.plot(history.history["accuracy"], label = "training")
@@ -253,26 +237,14 @@ plt.legend()
 ```
 ![PIC2.png](https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/pic2_model1_history.png)
 
-<<<<<<< HEAD
-### My observations
-=======
-### My observation
->>>>>>> d6f0f57feefc0dbfb79f4cb0a81217c4ff5d89dd
-(1) The validation accuracy of model1 stabilized between **56% and 64%** during training.
-
-(2) The highest validation accuracy is **63.74%**. Compare that to the baseline, I improved 11% of accuracy.
-
-(3) From the plot, I observed overfitting in model1. For example, in epoch 7/20, we got the highest validation accuracy 63.74% , but then the validation accuracy dropped a little.
-
-
-## 3.Model with Data Augmentation-Model2
+## 3.Model with Data Augmentation
 In this part, we add some data augmentation layers to the model. Data Augmentation refers to include modified copies of the same image in the training set. For example, we can flip the image upside down or rotate it some degrees in order to help our model learn *invariant features* of input images.
 
 we create a *tf.keras.layers.RandomFlip()* layer and a *tf.keras.layers.randomRotation()* layer. then plot both the origianl image and a few copies to which randomflip and randomrotation has been applied.
 
 ```python
 data_augmentation = tf.keras.Sequential([
-    tf.keras.layers.RandomFlip("horizontal_and_vertical")
+    tf.keras.layers.RandomFlip("horizontal")
 ])
 
 for image, _ in train_dataset.take(1):
@@ -283,13 +255,14 @@ for image, _ in train_dataset.take(1):
     augmented_image = data_augmentation(tf.expand_dims(first_image, 0))
     plt.imshow(augmented_image[0]/ 255)
     plt.axis('off')
+
 ```
 
 ![PIC3.png](https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/pic3_augmentation.png)
 
 ```python
 data_rotation = tf.keras.Sequential([
-    tf.keras.layers.RandomRotation(0.2),
+    tf.keras.layers.RandomRotation(0.1),
 ])
 
 for image, _ in train_dataset.take(1):
@@ -395,42 +368,12 @@ Epoch 20/20
 63/63 [==============================] - 5s 78ms/step - loss: 1.0995 
         - accuracy: 0.6915 - val_loss: 0.8102 - val_accuracy: 0.6795    
 ```
-<<<<<<< HEAD
-Plot the history of model2, including the training and validation performance.
-=======
-Make the plot of the history of model2, including the training and validation performance.
->>>>>>> d6f0f57feefc0dbfb79f4cb0a81217c4ff5d89dd
 
-```python
-plt.plot(history.history["accuracy"], label = "training")
-plt.plot(history.history["val_accuracy"], label = "validation")
-plt.gca().set(xlabel = "epoch", ylabel = "accuracy")
-plt.legend()
-```
+I tried some kinds of structures of the model, the training accuray of model2 is worse than model1, but validation accuray is **between 55% to 68%**, a little better than model1.
+On the other hand, I observe overfitting in model2, in Epoch 13/20, the accuracy accuray is 70.54%, but from epoch 14 to 20, the training accuray decrease to 67.95%.
 
-![PIC6.png](https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/pic6_model2_history.png)
-
-<<<<<<< HEAD
-### My observations
-=======
-### My observation
->>>>>>> d6f0f57feefc0dbfb79f4cb0a81217c4ff5d89dd
-(1) I tried some kinds of structures of the model, some of them performs a little worse than model1.
-
-(2) After several experiments, the validation accuray of the model2 stabilized **between 51% to 71%** during training, a little better than model1.
-
-(3) The highest validation accuracy is **70.54%**. Compare that to the baseline, I improved 18% of accuracy and compare that to the model1, I improved 7% of accuracy.
-
-(4) From the plot, I observed overfitting in model2. For example, in epoch 13/20, the accuracy accuray is the highest of 70.54%, but from epoch 14 to 20, the training accuray dropped to 67.95%.
-
-<<<<<<< HEAD
-## 4.Data Preprocessing-Model3
-=======
-## 4.Data Prerocessing-Model3
->>>>>>> d6f0f57feefc0dbfb79f4cb0a81217c4ff5d89dd
-We can make simple transformations to the input data. The original data has pixels with RGB values between 0 adn 255, we can normalized the value between 0 to 1 or between -1 and 1 in order to train faster. 
-
-The following code create a preprocessing layer called preprocessor and incorporate the lyaer as the very first layer of model3.
+## 4.Data Processing
+We can make simple transformations to the input data. The original data has pixels with RGB values between 0 adn 255, we can normalized the value between 0 to 1 or between -1 and 1 in order to train faster. The following code create a preprocessing layer called preprocessor and incorporate the lyaer as the very first layer of model3.
 
 ```python
 i = tf.keras.Input(shape=(160,160,3))
@@ -449,9 +392,8 @@ model3 = models.Sequential([
     layers.Conv2D(64, 3, padding='same', activation='relu'),
     layers.MaxPooling2D(),
     layers.Flatten(),
-    layers.Dropout(0.2),
     layers.Dense(128, activation='relu'),
-    layers.Dense(64, activation='relu')
+    layers.Dense(64, activation='relu'),    
 ])
 ```
 Here's the history of the accuracy on both the training and vailidation sets of model3.
@@ -527,34 +469,9 @@ Epoch 20/20
 63/63 [==============================] - 5s 77ms/step - loss: 0.3691 
         - accuracy: 0.8410 - val_loss: 0.6032 - val_accuracy: 0.7413
 ```
-<<<<<<< HEAD
-Plot the history of model3, including the training and validation performance.
-=======
-Make the plot of the history of model3, including the training and validation performance.
->>>>>>> d6f0f57feefc0dbfb79f4cb0a81217c4ff5d89dd
+The validation accuray of model3 is **between 59% to 78%**, better than model1 and model2. I observe overfitting in model3 too, in Epoch 14/20, the accuracy accuray is 77.8%, but from epoch 15 to 18, the training accuray decreased. In epoth 19/20, the validation accuracy is 78.09%, but in epoth 20/20, the validation accuracy is only 74.13%.
 
-```python
-plt.plot(history.history["accuracy"], label = "training")
-plt.plot(history.history["val_accuracy"], label = "validation")
-plt.gca().set(xlabel = "epoch", ylabel = "accuracy")
-plt.legend()
-```
-
-![PIC7.png](https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/pic7_model3_history.png)
-
-<<<<<<< HEAD
-### My observations
-=======
-### My observation
->>>>>>> d6f0f57feefc0dbfb79f4cb0a81217c4ff5d89dd
-
-(1) The validation accuray of the model3 stabilized **between 59% to 78%** during training, better than model1 and model2.
-
-(2) The highest validation accuracy is **78.09%**. Compare that to the baseline, I improved 26% of accuracy, compared that to the model1, I improved 15% of accuracy, and compared that to the model2, I imporved 8% of accuracy.
-
-(3) From the plot, I observed overfitting in model3. For example, in epoch 19/20, the accuracy accuray is the highest of 78.09%, but in epoch 20, the training accuray dropped to 74.13%.
-
-## 5.Transfer Learning-Model4
+## 5.Transfer Learning
 Sometimes, someone might already have trained a model that does a related task, and might have learned some relevant patterns. We want to use a pre-exisiting model for our task.
 Firstly, we access a pre-existing "base model", then we incorporate it into a full model for current task, and then train the model.
 
@@ -570,7 +487,7 @@ i = tf.keras.Input(shape = IMG_SHAPE)
 x = base_model(i, training = False)
 base_model_layer = tf.keras.Model(inputs=[i], outputs = [x])
 ```
-We created model4 that uses MobileNetV2. The first layer of this model is preprocessor, followed by data augumentation layers, then is the base_model_layer, followed by the globalMaxPooling2D layer, the Dropout layer and the last layer is dense layer that performs the classification.
+Create model4 that use MobileNetV2, the first layer is proprocessor, and then data augmentation layers, and then place base_model_layer, then globalMaxPooling2D, Dropout and dense layer at the very end to perform the classification.
 
 ```python
 model4 = models.Sequential([
@@ -583,16 +500,12 @@ model4 = models.Sequential([
     layers.Dense(1)
 ])
 ```
-We train model4 and plot the history of model4.
+then train model4 and plot the history of model4.
 
 ```python
 base_learning_rate = 0.0001
 model4.compile(optimizer=tf.keras.optimizers.
-<<<<<<< HEAD
-              Adam(learning_rate=base_learning_rate),
-=======
                          Adam(learning_rate=base_learning_rate),
->>>>>>> d6f0f57feefc0dbfb79f4cb0a81217c4ff5d89dd
               loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
               metrics=['accuracy'])
 history = model4.fit(train_dataset, 
@@ -662,6 +575,20 @@ Epoch 20/20
 63/63 [==============================] - 6s 86ms/step - loss: 0.1303 
         - accuracy: 0.9445 - val_loss: 0.0829 - val_accuracy: 0.9641
 ```
+The validation accuray of model4 is **between 77% to 97%**, better than model1, model2 and model3.
+
+
+Score the Test Dataset, The test accuracy is 97.4%.
+
+```python
+initial_epochs = 10
+loss,accuray = model5.evaluate(test_dataset)
+accuray
+```
+```python
+6/6 [==============================] - 1s 64ms/step - loss: 0.0541 - accuracy: 0.9740
+[0.05411681905388832, 0.9739583134651184]
+```
 
 Let's take a look at the learning curve of training and verifying accuracy / loss when using mobilenet V2 basic model as a fixed feature extraction program.
 
@@ -692,37 +619,5 @@ plt.xlabel('epoch')
 plt.show()
 ```
 ![PIC5.png](https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/pic5_model4.png)
-
-<<<<<<< HEAD
-### My observations
-=======
-### My observation
->>>>>>> d6f0f57feefc0dbfb79f4cb0a81217c4ff5d89dd
-(1) The validation accuray of the model4 stabilized **between 77% to 97%** during training, much better than model1,model2 and model3.
-
-(2) The highest validation accuracy is 96.53%. Compared to the baseline, the accuracy improved by 45%. Compared to model 1 and model 2, the accuracy improved by 34% and 27%, respectively. Model 3 improved by 19% in accuracy.
-
-(3) From the plot, I didnot observe overfitting in model4.
-
-Score the Test Dataset, The test accuracy is 97.4%.
-
-```python
-initial_epochs = 10
-loss,accuray = model4.evaluate(test_dataset)
-accuray
-```
-```python
-6/6 [==============================] - 1s 64ms/step - loss: 0.0541 - accuracy: 0.9740
-[0.05411681905388832, 0.9739583134651184]
-```
-
-## Summary
-In blog post 5, I constructed four models.
-- Model1 obtained **63.74%** validation accuracy.
-- Model2 obtained **70.54%** validation accuracy.
-- Model3 obtained **78.09%** validation accuracy.
-- Model4 obtained **96.53%** validation accuracy.
-
-The most performant model,model4 is evaluated to the test dataset and the test accuracy is **97.4%**.
 
 Thank you!!!
