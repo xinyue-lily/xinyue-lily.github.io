@@ -1,0 +1,503 @@
+---
+layout: post
+title: Blog Post 6
+---
+
+2022-03-03
+
+
+# Fake News Classification
+
+## The Task
+We will develop and assess a fake news classifier using Tensorflow.
+
+This is the link to my github respository. [https://github.com/xinyudong1129/Blog-Post/tree/main/blogpost6](https://github.com/xinyudong1129/Blog-Post/tree/main/blogpost6)
+
+## Reference website
+[Text classification](https://www.tensorflow.org/tutorials/keras/text_calssification)
+
+[Text Vectorization](https://www.tensorflow.org/api_docs/python/tf/keras/layers/experimental/preprocessing/TextVectorization)
+  
+[Functional API](https://www.tensorflow.org/guide/keras/functional)
+
+[Stop Words](https://stackoverflow.com/questions/29523254/python-remove-stop-words-from-pandas-dataframe)
+
+
+
+## 1. Obtain Data
+
+### (1) DataSource
+
+Our data comes from the article
+- Ahmed H, Traore I, Saad S.(2017)"Detection of Online Fake News Using N-Gram Analysis and Machine Learning Techniques. In: Traore I., Woungang I., Awad A.(eds) *Intelligent, Secure,and Dependable Systems in Distributed and Cloud Environments.* ISDDC 2017. *Lecture Notes in Computer Science*, vol 10618. Springer, Cham (pp.127-138)
+
+- The professor have done a small amount of data cleaning and performed a train-test split.
+
+### (2) Make a Dataset
+We wrote a function called make_dataset. This function do two things:
+
+- Remove stopwords from the article text and title . A stopword is a word that is usually considered to be uninformative, such as “the,” “and,” or “but.” 
+
+- Construct and return a tf.data.Dataset with two inputs and one output. The input should be of the form (title, text) , and the output should consist only of the fake column. 
+
+```python
+from nltk.corpus import stopwords
+stop = stopwords.words('english')
+def make_dataset(df):
+    df["title"] = df["title"].apply(lambda x: ' '.join([word for word in 
+                                    x.split() if word not in (stop)]))
+    df["text"] = df["text"].apply(lambda x: ' '.join([word for word in 
+                                  x.split() if word not in (stop)]))
+    data = tf.data.Dataset.from_tensor_slices(
+    (
+        {
+            "title" : df[["title"]],
+            "text" : df[["text"]]
+        }, 
+        {
+            "fake" : df[["fake"]]
+        }
+       )
+    )
+    return data
+```
+
+### (3) Perform train/test/vaidation split
+Call the function make_dataset on my training dataframe to produce a train_dataset, then split 20% of it to use for validation_dataset. 
+
+Call the funciton make_dataset on my testing dataframe to produce a test_dataset.
+
+For each of the three Datasets, we batch them into small chunks of data. This can sometimes reduce accuracy, but can also greatly increase the speed of training. I found batches of 100 rows to work well.
+
+```python
+df1 = pd.read_csv("fake_news_train.csv")
+data = make_dataset(df1)
+data = data.shuffle(buffer_size = len(data))
+train_size = int(0.8*len(data))
+train_dataset = data.take(train_size).batch(100)
+val_dataset = data.skip(train_size).batch(100)
+df2 = pd.read_csv("fake_news_test.csv")
+test_dataset = make_dataset(df2).batch(100)
+
+len(train_dataset),len(val_dataset),len(test_dataset)
+```
+```python
+(180, 45, 225)
+```
+### (4) Base Rate
+The base rate refers to the accuracy of a model that always makes the same guess(for example, such a model might always say "fake news!"). Determine the base rate for this data set by examining the labels on the training set.
+```python
+df3 = df1[df1["fake"]==1]
+base_rate =df3.shape[0]/df1.shape[0]
+print(base_rate)
+```
+```python
+0.522963160942581
+```
+## 2. Create Models
+
+In this part, we create three Tensorflow models to compare their performance.
+
+- In the first model, I use only the article title as an input.
+- In the second model, I use only the article text as an input.
+- In the third model, I use both the article title and the article text as input.
+
+### (1) Standardization and Vectorization
+*Standardization* refers to the act of taking a some text that's "messy" in some way and making it lesss messy. Common standardizations includes:
+- Removing capitals.
+- Removing punctuation.
+- Removing HTML elements or other non-semantic content.
+In this standardization, we convert all text to lowercase and remove punctuation.
+
+```python
+size_vocabulary = 2000
+
+def standardization(input_data):
+    lowercase = tf.strings.lower(input_data)
+    no_punctuation = tf.strings.regex_replace(lowercase,
+                        '[%s]' % re.escape(string.punctuation),'')
+    return no_punctuation 
+```
+*Vectorization* refers to the process of representing text as a vector (array, tensor). There are multiple ways to carry out vectorization. We replace each word by its *frequency rank* in the data. 
+
+```python
+vectorize_layer = TextVectorization(
+    standardize=standardization,
+    max_tokens=size_vocabulary, # only consider this many words
+    output_mode='int',
+    output_sequence_length=500) 
+vectorize_layer.adapt(train_dataset.map(lambda x, y: x["title"]))
+vectorize_layer.adapt(train_dataset.map(lambda x, y: x["text"]))
+```
+
+We adapt the vectorizaiton layer to the title and the text. In the adaption process, the vectorization layer learns what words are common in title and text.
+
+```python
+embedding_layer = layers.Embedding(size_vocabulary, output_dim = 10, 
+                                   name = "embedding")
+```
+We created an embedding layer in 10 dimensions.
+### (2) Inputs
+Specify the two kinds of Keras.Input for our model. We have one input for each qualitatively distinct kind of predictor data.
+```python
+# inputs
+title_input = keras.Input(
+    shape = (1,), 
+    name = "title",
+    dtype = "string"
+)
+
+text_input = keras.Input(
+    shape = (1,), 
+    name = "text",
+    dtype = "string"
+)
+```
+
+### (3) Model1: only the article title as an input
+
+In the first model, We wrote a pipeline for the title. This pipeline included one vectorize layer, one Embedding layer, one GlobalMaxPooling1D layer, one dense layer, two Dropout layer to reduce overfitting.
+
+```python
+# layers for processing the title
+title_features = vectorize_layer(title_input)
+title_features = embedding_layer(title_features)
+title_features = layers.Dropout(0.3)(title_features)
+title_features = layers.GlobalMaxPooling1D()(title_features)
+title_features = layers.Dropout(0.3)(title_features)
+title_features = layers.Dense(32, activation='sigmoid')(title_features)
+title_output = layers.Dense(2,name="fake")(title_features)
+model1 = keras.Model(
+    inputs = [title_input], 
+    outputs = title_output
+)
+```
+Train model1 and plot the history of the accuracy on both the training and vailidation sets.
+
+```python
+model1.compile(optimizer = "adam",
+            loss = losses.SparseCategoricalCrossentropy(from_logits=True),
+            metrics=['accuracy']
+)
+history = model1.fit(train_dataset, 
+                validation_data=val_dataset,
+                epochs = 10) 
+```
+Here's the history of the accuracy on both the training and vailidation sets.
+
+```python
+180/180 [==============================] - 2s 11ms/step - loss: 0.6647 
+          - accuracy: 0.6489 - val_loss: 0.6078 - val_accuracy: 0.8906
+Epoch 2/10
+180/180 [==============================] - 2s 10ms/step - loss: 0.4802 
+          - accuracy: 0.8531 - val_loss: 0.3568 - val_accuracy: 0.9174
+Epoch 3/10
+180/180 [==============================] - 2s 10ms/step - loss: 0.3275 
+          - accuracy: 0.8801 - val_loss: 0.2422 - val_accuracy: 0.9305
+Epoch 4/10
+180/180 [==============================] - 2s 10ms/step - loss: 0.2882 
+          - accuracy: 0.8842 - val_loss: 0.1980 - val_accuracy: 0.9379
+Epoch 5/10
+180/180 [==============================] - 2s 10ms/step - loss: 0.2805 
+          - accuracy: 0.8823 - val_loss: 0.1883 - val_accuracy: 0.9367
+Epoch 6/10
+180/180 [==============================] - 2s 10ms/step - loss: 0.2724 
+          - accuracy: 0.8875 - val_loss: 0.1706 - val_accuracy: 0.9459
+Epoch 7/10
+180/180 [==============================] - 2s 10ms/step - loss: 0.2593 
+          - accuracy: 0.8935 - val_loss: 0.1587 - val_accuracy: 0.9450
+Epoch 8/10
+180/180 [==============================] - 2s 10ms/step - loss: 0.2611 
+          - accuracy: 0.8933 - val_loss: 0.1646 - val_accuracy: 0.9461
+Epoch 9/10
+180/180 [==============================] - 2s 10ms/step - loss: 0.2633 
+          - accuracy: 0.8891 - val_loss: 0.1636 - val_accuracy: 0.9425
+Epoch 10/10
+180/180 [==============================] - 2s 10ms/step - loss: 0.2523 
+          - accuracy: 0.8962 - val_loss: 0.1635 - val_accuracy: 0.9434
+```
+
+Plot the history of model1, including the training and validation performance.
+
+```python
+plt.plot(history.history["accuracy"], label = "training")
+plt.plot(history.history["val_accuracy"], label = "validation")
+plt.gca().set(xlabel = "epoch", ylabel = "accuracy")
+plt.legend()
+```
+![model1.png](https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/model1.png)
+
+#### My observations
+- The validation accuracy of model1 stabilized between **89% and 94.7%** during training.
+
+- The highest validation accuracy is **94.61%**. 
+
+- From the plot, I observed overfitting in model1. 
+
+
+### (4) Model2: Only the article text as an input
+
+We wrote a pipeline for the text. This pipeline included one vectorize layer, one Embedding layer, one GlobalMaxPooling1D layer, one dense layer, two Dropout layer. The pipeline is pretty much the same as model1 to compare the performances.
+
+```python
+text_features = vectorize_layer(text_input)
+text_features = embedding_layer(text_features)
+text_features = layers.Dropout(0.3)(text_features)
+text_features = layers.GlobalMaxPooling1D()(text_features)
+text_features = layers.Dropout(0.3)(text_features)
+text_features = layers.Dense(32, activation='sigmoid')(text_features)
+text_output = layers.Dense(2,name="fake")(text_features)
+model2 = keras.Model(
+    inputs = [text_input], 
+    outputs = text_output
+)
+```
+Train model2 and plot the history of the accuracy on both the training and vailidation sets.
+
+```python
+model2.compile(optimizer = "adam",
+              loss = losses.SparseCategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy']
+)
+history = model2.fit(train_dataset, 
+                    validation_data=val_dataset,
+                    epochs = 10) 
+```
+Here's the history of the accuracy on both the training and vailidation sets.
+
+```python
+180/180 [==============================] - 4s 22ms/step - loss: 0.6689 
+          - accuracy: 0.6499 - val_loss: 0.6041 - val_accuracy: 0.7715
+Epoch 2/10
+180/180 [==============================] - 4s 21ms/step - loss: 0.5014 
+          - accuracy: 0.7970 - val_loss: 0.4356 - val_accuracy: 0.8535
+Epoch 3/10
+180/180 [==============================] - 4s 21ms/step - loss: 0.3974 
+          - accuracy: 0.8276 - val_loss: 0.3460 - val_accuracy: 0.8784
+Epoch 4/10
+180/180 [==============================] - 4s 21ms/step - loss: 0.3613 
+          - accuracy: 0.8415 - val_loss: 0.3032 - val_accuracy: 0.8940
+Epoch 5/10
+180/180 [==============================] - 4s 21ms/step - loss: 0.3372 
+          - accuracy: 0.8513 - val_loss: 0.2794 - val_accuracy: 0.9029
+Epoch 6/10
+180/180 [==============================] - 4s 21ms/step - loss: 0.3253 
+          - accuracy: 0.8608 - val_loss: 0.2674 - val_accuracy: 0.9049
+Epoch 7/10
+180/180 [==============================] - 4s 21ms/step - loss: 0.3218 
+          - accuracy: 0.8636 - val_loss: 0.2596 - val_accuracy: 0.9094
+Epoch 8/10
+180/180 [==============================] - 4s 21ms/step - loss: 0.3080 
+          - accuracy: 0.8691 - val_loss: 0.2467 - val_accuracy: 0.9138
+Epoch 9/10
+180/180 [==============================] - 4s 21ms/step - loss: 0.2998 
+          - accuracy: 0.8724 - val_loss: 0.2353 - val_accuracy: 0.9187
+Epoch 10/10
+180/180 [==============================] - 4s 21ms/step - loss: 0.2953 
+          - accuracy: 0.8777 - val_loss: 0.2340 - val_accuracy: 0.9209
+```
+
+Plot the history of model2, including the training and validation performance.
+
+```python
+plt.plot(history.history["accuracy"], label = "training")
+plt.plot(history.history["val_accuracy"], label = "validation")
+plt.gca().set(xlabel = "epoch", ylabel = "accuracy")
+plt.legend()
+```
+![model2.png](https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/model2.png)
+
+#### My observations
+- The validation accuracy of model2 stabilized between **77% and 92%** during training.
+
+- The highest validation accuracy is **92.09%**, a little lower than model1.
+
+- From the plot, overfitting is not observed in model2. 
+
+
+### (5) Model3: both the article title and the article text as input
+
+We concatenate the output of the title pipeline with the output of the text pipeline, then pass the consolidated set of computed features through a Dense layer.
+
+```python
+main = layers.concatenate([title_features,text_features],axis=1)
+output = layers.Dense(2)(main)
+model3 = keras.Model(
+     inputs = [title_input,text_input],
+     outputs = output
+)
+```
+We have created the model3 and we can visualize the model plot using the plot_model function.
+
+```python
+keras.utils.plot_model(model3)
+```
+![model3-structure.png](https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/model3-structure.png)
+
+```python
+model3.compile(optimizer = "adam",
+              loss = losses.SparseCategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy']
+)
+history = model3.fit(train_dataset, 
+                    validation_data=val_dataset,
+                    epochs = 10) 
+```
+Train the model3 and here's the history of the accuracy on both the training and vailidation sets of Model3.
+
+```python
+Epoch 1/10
+Epoch 1/10
+180/180 [==============================] - 5s 29ms/step - loss: 0.3638 
+          - accuracy: 0.8664 - val_loss: 0.1608 - val_accuracy: 0.9800
+Epoch 2/10
+180/180 [==============================] - 5s 27ms/step - loss: 0.1655 
+          - accuracy: 0.9473 - val_loss: 0.1018 - val_accuracy: 0.9764
+Epoch 3/10
+180/180 [==============================] - 5s 27ms/step - loss: 0.1335 
+          - accuracy: 0.9522 - val_loss: 0.0816 - val_accuracy: 0.9795
+Epoch 4/10
+180/180 [==============================] - 5s 29ms/step - loss: 0.1205 
+          - accuracy: 0.9534 - val_loss: 0.0712 - val_accuracy: 0.9793
+Epoch 5/10
+180/180 [==============================] - 5s 27ms/step - loss: 0.1179 
+          - accuracy: 0.9559 - val_loss: 0.0726 - val_accuracy: 0.9786
+Epoch 6/10
+180/180 [==============================] - 5s 28ms/step - loss: 0.1170 
+          - accuracy: 0.9556 - val_loss: 0.0628 - val_accuracy: 0.9804
+Epoch 7/10
+180/180 [==============================] - 5s 28ms/step - loss: 0.1195 
+          - accuracy: 0.9538 - val_loss: 0.0651 - val_accuracy: 0.9793
+Epoch 8/10
+180/180 [==============================] - 5s 27ms/step - loss: 0.1145 
+          - accuracy: 0.9563 - val_loss: 0.0647 - val_accuracy: 0.9786
+Epoch 9/10
+180/180 [==============================] - 5s 27ms/step - loss: 0.1089 
+          - accuracy: 0.9583 - val_loss: 0.0575 - val_accuracy: 0.9815
+Epoch 10/10
+180/180 [==============================] - 5s 27ms/step - loss: 0.1110 
+          - accuracy: 0.9579 - val_loss: 0.0585 - val_accuracy: 0.9797
+```
+
+Plot the history of model3, including the training and validation performance.
+
+```python
+plt.plot(history.history["accuracy"], label = "training")
+plt.plot(history.history["val_accuracy"], label = "validation")
+plt.gca().set(xlabel = "epoch", ylabel = "accuracy")
+plt.legend()
+```
+![model3.png](https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/model3.png)
+
+#### My observations
+- The validation accuracy of model3 stabilized between **97.64% and 98.15%** during training.
+
+- The highest validation accuracy is **98.15%**. 
+
+- From the plot, I observed overfitting in model3.
+
+- **The performance of model3 has significant improvement than model1 and model2. It's proved that both the article title and the article text as input is much better than single one as input.**
+
+## 3.Model Evaluation
+we’ll test the model performance on unseen test data. 
+
+```python
+model3.evaluate(test_dataset)
+```
+```python
+225/225 [==============================] - 3s 11ms/step - loss: 0.0670
+                                         - accuracy: 0.9775
+```
+```python
+[0.06704675406217575, 0.977504551410675]
+```
+The accuracy of test_dataset is **97.75%**, not bad!
+
+
+## 4.Embedding Visualizaiton
+*Word Embedding* refers to a representation of a word in a vector space. Each word is assigned an individual vector. The general aim of a word embedding is to create a representation such that word with related meanings are close to each other in a vector space, while words with different meanings are farther apart.
+
+It's fun to take a look at the embedding learned by our model, We are able to find some interesting relations in the words that the model found useful when distinguishing real news from fake news.
+
+We choose to create a 10-dimensional embedding when constructing our model. For plotting in 2 dimensions, we select principal component analysis (PCA) and then make a data frame for our results.
+
+```python
+# get the weights from the embedding layer
+weights = model3.get_layer('embedding').get_weights()[0] 
+# get the vocabulary from our data prep for later
+vocab = vectorize_layer.get_vocabulary()  
+
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2)
+weights = pca.fit_transform(weights)
+
+embedding_df = pd.DataFrame({
+    'word' : vocab, 
+    'x0'   : weights[:,0],
+    'x1'   : weights[:,1]
+})
+```
+Now we're Ready to plot! Note that the embedding appear to be “stretched out” in two directions, with one direction corresponding to fake news or not.
+
+```python
+import plotly.express as px 
+fig = px.scatter(embedding_df, 
+                 x = "x0", 
+                 y = "x1", 
+                 size = list(np.ones(len(embedding_df))),
+                 size_max = 2,
+                 hover_name = "word")
+
+fig.show()
+```
+
+{% include embedding.html %}
+
+We have made a word embedding which seems to have learned some reasonable associations.
+
+With these considerations in mind, let’s see what kinds of words our model associates with men and women.
+
+```python
+f = ["Trump"]
+m = ["Putin"]
+
+highlight_1 = ["oil", "voting","fail","nuclear"]
+highlight_2 = ["fight", "Russia", "Korea"]
+
+def gender_mapper(x):
+    if x in f:
+        return 1
+    elif x in m:
+        return 4
+    elif x in highlight_1:
+        return 3
+    elif x in highlight_2:
+        return 2
+    else:
+        return 0
+
+embedding_df["highlight"] = embedding_df["word"].apply(gender_mapper)
+embedding_df["size"]      = np.array(1.0 + 50*(embedding_df["highlight"] > 0))
+```
+```python
+import plotly.express as px 
+
+fig = px.scatter(embedding_df, 
+                 x = "x0", 
+                 y = "x1", 
+                 color = "highlight",
+                 size = list(embedding_df["size"]),
+                 size_max = 10,
+                 hover_name = "word")
+
+fig.show()
+```
+{% include wordsembedding.html %}
+
+#### My observations:
+- The words like "oil", "voting" and "fail" are more closely located to Trump.
+- The words like "nuclear", "Russia" and "Korea" are more closely located to Putin.
+- Trump and Putin are close because they mentioned each other for many times.
+
+
+Thank you!!!
