@@ -34,11 +34,11 @@ Our data comes from the article
 - The professor have done a small amount of data cleaning and performed a train-test split.
 
 ### (2) Make a Dataset
-We wrote a function called make_dataset. This function does two things:
+We wrote a function called make_dataset. This function do two things:
 
 - Remove stopwords from the article text and title . A stopword is a word that is usually considered to be uninformative, such as “the,” “and,” or “but.” 
 
-- Construct and return a tf.data.Dataset with two inputs and one output. The input are (title, text) , and the output consist only of the fake column. 
+- Construct and return a tf.data.Dataset with two inputs and one output. The input should be of the form (title, text) , and the output should consist only of the fake column. 
 
 ```python
 from nltk.corpus import stopwords
@@ -65,7 +65,7 @@ def make_dataset(df):
 ### (3) Perform train/test/vaidation split
 Call the function make_dataset on my training dataframe to produce a train_dataset, then split 20% of it to use for validation_dataset. 
 
-Call the function make_dataset on my testing dataframe to produce a test_dataset.
+Call the funciton make_dataset on my testing dataframe to produce a test_dataset.
 
 For each of the three Datasets, we batch them into small chunks of data. This can sometimes reduce accuracy, but can also greatly increase the speed of training. I found batches of 100 rows to work well.
 
@@ -107,7 +107,6 @@ In this part, we create three Tensorflow models to compare their performance.
 - Removing capitals.
 - Removing punctuation.
 - Removing HTML elements or other non-semantic content.
-
 In this standardization, we convert all text to lowercase and remove punctuation.
 
 ```python
@@ -238,7 +237,7 @@ plt.legend()
 
 ### (4) Model2: Only the article text as an input
 
-We wrote a pipeline for the text. This pipeline included one vectorize layer, one Embedding layer, one GlobalMaxPooling1D layer, one dense layer, two Dropout layer. The pipeline is pretty much the same as model1 to compare their performance.
+We wrote a pipeline for the text. This pipeline included one vectorize layer, one Embedding layer, one GlobalMaxPooling1D layer, one dense layer, two Dropout layer. The pipeline is pretty much the same as model1 to compare the performances.
 
 ```python
 text_features = vectorize_layer(text_input)
@@ -348,6 +347,7 @@ Train the model3 and here's the history of the accuracy on both the training and
 
 ```python
 Epoch 1/10
+Epoch 1/10
 180/180 [==============================] - 5s 29ms/step - loss: 0.3638 
           - accuracy: 0.8664 - val_loss: 0.1608 - val_accuracy: 0.9800
 Epoch 2/10
@@ -396,10 +396,10 @@ plt.legend()
 
 - From the plot, I observed overfitting in model3.
 
-- **The performance of model3 has significant improvement over model1 and model2. It's proved that both the article title and the article text as input is much better than single one as input.**
+- **The performance of model3 has significant improvement than model1 and model2. It's proved that both the article title and the article text as input is much better than single one as input.**
 
 ## 3.Model Evaluation
-We’ll test the model performance on unseen test data. 
+we’ll test the model performance on unseen test data. 
 
 ```python
 model3.evaluate(test_dataset)
@@ -455,7 +455,7 @@ fig.show()
 
 We have made a word embedding which seems to have learned some reasonable associations.
 
-With these considerations in mind, let’s see what kinds of words our model associates with Trump and Putin.
+With these considerations in mind, let’s see what kinds of words our model associates with men and women.
 
 ```python
 f = ["Trump"]
