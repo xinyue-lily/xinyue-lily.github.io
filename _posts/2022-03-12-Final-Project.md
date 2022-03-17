@@ -68,8 +68,28 @@ X_mean=X.mean(axis=0)
 X_std=X.std(axis=0)
 X_scaled= (X-X_mean)/X_std
 ```
-For comparison, We draw TSNE diagram for the original dataset and the scaled dataset.
+We choose six features, including two mean features, two variance features and two maximum features. These three types of data are different in terms of properties and magnitudes. Before we standardize the features of datasets, we can observe, as shown in the graph on the left, that the standard deviation feature value distribution is concentrated in a small interval with a small value. The mean feature distribution, however, is wide and the value is large. As shown in the right figure. After standardization, the distribution of features falls into the same interval, which ensures the reliability of classification.
+
+```python
+# Draw the comparison diagram of KDE before and after standardization
+features = df.columns.values.tolist()
+features = features[2:32]
+fig,axes = plt.subplots(1, 2, figsize = (12, 5), sharex=False)
+for i in [0, 1, 10, 11, 20, 21]: 
+    sns.kdeplot(X.iloc[:,i], label=features[i], shade=True, ax=axes[0])
+    sns.kdeplot(X_scaled.iloc[:, i], label=features[i], shade=True, ax=axes[1])
+axes[0].set(title = "Orignal Dataset")
+axes[1].set(title = "Scaled Dataset")
+axes[0].legend()
+axes[1].legend()
+plt.suptitle('The comparison diagram of KDE before and after standardization',ha='center')
+```
+![kde.png]({{ site.baseurl }}/images/kde.png)
+
+For comparison, We draw TSNE diagrams for the original dataset and the dataset after standardization. We can see from the plot that the sample separation has greatly improved.
 ![TSNE.png]({{ site.baseurl }}/images/TSNE_TSNE_scaled.png)
+
+
 
 ## 1. First Step: Load Data
 First, we are going to load our data and import all the packages we need.
