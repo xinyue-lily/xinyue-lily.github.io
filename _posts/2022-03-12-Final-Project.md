@@ -43,9 +43,14 @@ The **second** thing we want to improve is the bias. As we mention before, our A
   (3) Webapp, identification
 
 ## 1. Data analysis and feature selection
-
-
-
+First, we are going to load our data and use pairplot to visualize the relationship between the top ten features.
+```python
+df = pd.read_csv("wdbc.csv")
+cols = df.columns.values.tolist()
+cols = cols[1:12]
+sns.pairplot(df[cols],hue='diagnosis', height=1.5)
+```
+![pairplot.png]({{ site.baseurl }}/images/pairplot.png)
 ## 1. First Step: Load Data
 First, we are going to load our data and import all the packages we need.
 ```python
