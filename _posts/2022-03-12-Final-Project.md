@@ -33,6 +33,17 @@ The **second** thing we want to improve is the bias. As we mention before, our A
 
 > If we meet some intersting or useful knowledge associated with Python, we can write down them in our Blog. Yes, we are planning to use our Blog even though PIC 16B is finished. And WebApp construction is very useful in future career, because we use App every day. Basically, if we want to have a good career, we must build an ability to create WebApp. Now, we learned how to apply database, SQL and machine learning method into WebApp, that helps us to create more useful WebApp in the future.
 
+## Project Structure
+- **The Project is divided into three parts:**
+
+  (1) Data analysis and feature selection
+
+  (2) Model training and comparison
+
+  (3) Webapp, identification
+
+## 1. Data analysis and feature selection
+
 
 
 ## 1. First Step: Load Data
