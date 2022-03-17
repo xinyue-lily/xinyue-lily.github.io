@@ -51,6 +51,26 @@ cols = cols[1:12]
 sns.pairplot(df[cols],hue='diagnosis', height=1.5)
 ```
 ![pairplot.png]({{ site.baseurl }}/images/pairplot.png)
+
+The plots on the diagonal line describes the distribution of individual features in each category, and the plots in the upper triangle and the lower triangle illustrate the pairwise relationships between different features. It is obvious that there is strong correlation between the radius, the perimeter, and the area. In data analysis we only need to keep one of such features so that the features are independent to one another. By observation, we can also know that there is a linear relationship between the concavity and the concave point, and between the concavity and the compactness.
+
+### (a) Standardization
+The data type of tag diagnosis is character, "B" indicates benign and "m" indicates malignant. Use labelencoder to digitize it and encode the tag value as 0,1, so that it can be used as the training tag of the model.
+
+Every original data set may have differences in orders in dimension and different magnitudes. If we do not make modifications to them and use the original value directly, this will highlight the role of the features with higher numerical value in the analysis and weaken the role of the features with lower numerical value. To ensure the reliability of our results, we need to standardize the original data. After standardization, every feature has a mean of 0 and a standard deviation of 1.
+
+```python
+encoder = preprocessing.LabelEncoder().fit(df['diagnosis'])
+df['diagnosis'] = encoder.transform(df['diagnosis'])
+X = df.drop(['diagnosis','Ob'],axis = 1)
+y = df['diagnosis']
+X_mean=X.mean(axis=0)
+X_std=X.std(axis=0)
+X_scaled= (X-X_mean)/X_std
+```
+For comparison, We draw TSNE diagram for the original dataset and the scaled dataset.
+![TSNE.png]({{ site.baseurl }}/images/TSNE_TSNE_scaled.png)
+
 ## 1. First Step: Load Data
 First, we are going to load our data and import all the packages we need.
 ```python
