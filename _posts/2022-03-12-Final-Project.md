@@ -142,7 +142,7 @@ y_train=train['diagnosis']
 X_test=test.drop(['diagnosis'],axis = 1)
 y_test=test['diagnosis']
 ```
-we choose seven different combinations of columns and use them to do the comparison test.
+we choose seven different combinations of columns and use them in the comparative experiments.
 
 - ***cols0***: all the ***30*** features combination.
 
@@ -226,7 +226,7 @@ def check_column_score(clf):
 
 ### (3) Train and save the models
 #### (a) Logistic Regression
-We build a Logistic Regression Model and use all the possible feature combinations of this model to do the training and testing. We calculate the training and testing accuracies and order them by training accuracy.
+We build a logistic regression model and use all the possible feature combinations of this model to do the training and testing. We calculate the training and testing accuracies and order them by training accuracy.
 ```python
 from sklearn.linear_model import LogisticRegression
 LR = LogisticRegression()
@@ -249,7 +249,7 @@ check_column_score(LR)
  Train score is:0.904 --- Test score is:0.953
 ```
 
-We choose the features in cols5 and train the model based on those features. We also test the accuracy on the testing data set and use the function plot_confusionmatrix to display the confusion matrix.
+We choosed the features in cols5 and trained the model based on those features. Then we tested the accuracy on the testing dataset and use the function plot_confusionmatrix to plot the confusion matrix.
 ```python
 LR.fit(X_train[cols5], y_train)
 cv_score_test = cross_val_score(LR, X_test[cols5], y_test, cv=10).mean()
@@ -261,14 +261,14 @@ plot_confusionmatrix(LR,X_test[cols5],y_test)
 ```
 ![confusion1.jpg]({{ site.baseurl }}/images/confusion1.png)
 
-Save the trained linear regression model in .\models\LR.m so that it can be called in webapp.
+Save the trained logistic regression model in .\models\LR.m so that it can be called in webapp.
 
 ```python
 joblib.dump(LR, ".\\models\\LR.m")
 ``` 
 
 #### (b) Decision Tree
-We build a Decision Tree Model and use all the possible feature combinations of this model to do the training and testing. We calculate the training and testing accuracies and order them by training accuracy.
+We build a decision tree model and use all the possible feature combinations of this model to do the training and testing. We calculate the training and testing accuracies and order them by training accuracy.
 ```python
 from sklearn.tree import DecisionTreeClassifier
 DT = DecisionTreeClassifier(max_depth = 12, criterion = 'entropy')
@@ -291,7 +291,7 @@ check_column_score(DT)
  Train score is:0.895 --- Test score is:0.93
 ```
 
-We choose the features in cols5 and train the model based on those features. We also test the accuracy on the testing data set and use the function plot_confusionmatrix to display the confusion matrix.
+We choosed the features in cols5 and trained the model based on those features. Then we tested the accuracy on the testing dataset and use the function plot_confusionmatrix to plot the confusion matrix.
 
 ```python
 DT.fit(X_train[cols5], y_train)
@@ -311,7 +311,7 @@ joblib.dump(DT, ".\\models\\DT.m")
 ``` 
 
 #### (c) Multilayer Perceptron
-We build a Multilayer Perceptron Model and use all the possible feature combinations of this model to do the training and testing. We calculate the training and testing accuracies and order them by training accuracy.
+We build a multilayer perceptron model and use all the possible feature combinations of this model to do the training and testing. We calculate the training and testing accuracies and order them by training accuracy.
 ```python
 MLP = MLPClassifier(solver='adam', activation = 'relu', alpha=1e-5,max_iter=3000,
                      hidden_layer_sizes= (18,18,18),random_state=1)
@@ -335,7 +335,7 @@ check_column_score(MLP)
  Train score is:0.917 --- Test score is:0.906
 ```
 
-We choose the features in cols5 and train the model based on those features. We also test the accuracy on the testing data set and use the function plot_confusionmatrix to display the confusion matrix.
+We choosed the features in cols5 and trained the model based on those features. Then we tested the accuracy on the testing dataset and use the function plot_confusionmatrix to plot the confusion matrix.
 ```python
 MLP.fit(X_train[cols5], y_train)
 cv_score_test = cross_val_score(MLP, X_test[cols5], y_test, cv=10).mean()
@@ -347,14 +347,14 @@ plot_confusionmatrix(MLP,X_test[cols5],y_test)
 ```
 ![confusion3.jpg]({{ site.baseurl }}/images/confusion3.png)
 
-Save the trained Multilayer Perceptron model in .\models\MLP.m so that it can be called in webapp.
+Save the trained multilayer perceptron model in .\models\MLP.m so that it can be called in webapp.
 
 ```python
 joblib.dump(MLP, ".\\models\\MLP.m")
 ``` 
 
 #### (d) Random Forest
-We build a Random Forest Model and use all the possible feature combinations of this model to do the training and testing. We calculate the training and testing accuracies and order them by training accuracy.
+We build a random forest model and use all the possible feature combinations of this model to do the training and testing. We calculate the training and testing accuracies and order them by training accuracy.
 ```python
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
@@ -378,7 +378,7 @@ check_column_score(RF)
  Train score is:0.922 --- Test score is:0.947
 ```
 
-We choose the features in cols5 and train the model based on those features. We also test the accuracy on the testing data set and use the function plot_confusionmatrix to display the confusion matrix.
+We choosed the features in cols5 and trained the model based on those features. Then we tested the accuracy on the testing dataset and use the function plot_confusionmatrix to plot the confusion matrix.
 ```python
 RF.fit(X_train[cols5], y_train)
 cv_score_test = cross_val_score(RF, X_test[cols5], y_test, cv=10).mean()
@@ -390,14 +390,14 @@ plot_confusionmatrix(RF,X_test[cols5],y_test)
 ```
 ![confusion4.jpg]({{ site.baseurl }}/images/confusion4.png)
 
-Save the trained Random Forest model in .\models\RF.m so that it can be called in webapp.
+Save the trained random forest model in .\models\RF.m so that it can be called in webapp.
 
 ```python
 joblib.dump(RF, ".\\models\\RF.m")
 ``` 
 
 #### (e) SVM
-We build a Support Vector Machine Model and use all the possible feature combinations of this model to do the training and testing. We calculate the training and testing accuracies and order them by training accuracy.
+We build a support vector machine model and use all the possible feature combinations of this model to do the training and testing. We calculate the training and testing accuracies and order them by training accuracy.
 ```python
 SVM = SVC(kernel = 'rbf',C=1E6,gamma = 0.005)
 check_column_score(SVM)
@@ -419,7 +419,7 @@ check_column_score(SVM)
  Train score is:0.912 --- Test score is:0.912
 ```
 
-We choose the features in cols5 and train the model based on those features. We also test the accuracy on the testing data set and use the function plot_confusionmatrix to display the confusion matrix.
+We choosed the features in cols5 and trained the model based on those features. Then we tested the accuracy on the testing dataset and use the function plot_confusionmatrix to plot the confusion matrix.
 ```python
 SVM.fit(X_train[cols5], y_train)
 cv_score_test = cross_val_score(SVM, X_test[cols5], y_test, cv=10).mean()
@@ -431,14 +431,14 @@ plot_confusionmatrix(SVM,X_test[cols5],y_test)
 ```
 ![confusion5.jpg]({{ site.baseurl }}/images/confusion5.png)
 
-Save the trained Support Vector Machine model in .\models\SVM.m so that it can be called in webapp.
+Save the trained support vector machine model in .\models\SVM.m so that it can be called in webapp.
 
 ```python
 joblib.dump(SVM, ".\\models\\SVM.m")
 ``` 
 
 #### (f) Tensorflow
-We build a Tensorflow Model with only four features combinations of cols5. 
+We build a Tensorflow model with only four features combinations of cols5. 
 ```python
 import tensorflow as tf
 from tensorflow import keras
@@ -669,14 +669,14 @@ plt.gca().set(xlabel = "epoch", ylabel = "training accuracy")
 
 ![history1.jpg]({{ site.baseurl }}/images/history2.png)
 
-Finally, get our accuracy.
+Finally, get the testing accuracy.
 ```python
 TF1.evaluate(X_test[cols5], y_test, verbose = 2)
 ```
 ```python
 [0.12011773139238358, 0.9707602262496948]
 ```
-Save the trained TensorFlow model in models\TF and use it in webapp.
+Save the trained Tensorflow model in models\TF and use it in webapp.
 ```python
 TF1.save('.\\models\\TF') 
 ```
