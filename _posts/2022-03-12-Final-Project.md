@@ -249,7 +249,7 @@ check_column_score(LR)
  Train score is:0.904 --- Test score is:0.953
 ```
 
-We choosed the features in cols5 and trained the model based on those features. Then we tested the accuracy on the testing dataset and use the function plot_confusionmatrix to plot the confusion matrix.
+We choose the features in cols5 and train the model based on those features. Then we test the accuracy on the testing dataset and plot the confusion matrix with the function plot_confusionmatrix.
 ```python
 LR.fit(X_train[cols5], y_train)
 cv_score_test = cross_val_score(LR, X_test[cols5], y_test, cv=10).mean()
@@ -291,7 +291,7 @@ check_column_score(DT)
  Train score is:0.895 --- Test score is:0.93
 ```
 
-We choosed the features in cols5 and trained the model based on those features. Then we tested the accuracy on the testing dataset and use the function plot_confusionmatrix to plot the confusion matrix.
+We choose the features in cols5 and train the model based on those features. Then we test the accuracy on the testing dataset and plot the confusion matrix with the function plot_confusionmatrix.
 
 ```python
 DT.fit(X_train[cols5], y_train)
@@ -335,7 +335,7 @@ check_column_score(MLP)
  Train score is:0.917 --- Test score is:0.906
 ```
 
-We choosed the features in cols5 and trained the model based on those features. Then we tested the accuracy on the testing dataset and use the function plot_confusionmatrix to plot the confusion matrix.
+We choose the features in cols5 and train the model based on those features. Then we test the accuracy on the testing dataset and plot the confusion matrix with the function plot_confusionmatrix.
 ```python
 MLP.fit(X_train[cols5], y_train)
 cv_score_test = cross_val_score(MLP, X_test[cols5], y_test, cv=10).mean()
@@ -378,7 +378,7 @@ check_column_score(RF)
  Train score is:0.922 --- Test score is:0.947
 ```
 
-We choosed the features in cols5 and trained the model based on those features. Then we tested the accuracy on the testing dataset and use the function plot_confusionmatrix to plot the confusion matrix.
+We choose the features in cols5 and train the model based on those features. Then we test the accuracy on the testing dataset and plot the confusion matrix with the function plot_confusionmatrix.
 ```python
 RF.fit(X_train[cols5], y_train)
 cv_score_test = cross_val_score(RF, X_test[cols5], y_test, cv=10).mean()
@@ -419,7 +419,7 @@ check_column_score(SVM)
  Train score is:0.912 --- Test score is:0.912
 ```
 
-We choosed the features in cols5 and trained the model based on those features. Then we tested the accuracy on the testing dataset and use the function plot_confusionmatrix to plot the confusion matrix.
+We choose the features in cols5 and train the model based on those features. Then we test the accuracy on the testing dataset and plot the confusion matrix with the function plot_confusionmatrix.
 ```python
 SVM.fit(X_train[cols5], y_train)
 cv_score_test = cross_val_score(SVM, X_test[cols5], y_test, cv=10).mean()
