@@ -34,13 +34,13 @@ The **second** thing we want to improve is the bias. As we mention before, our A
 > If we meet some intersting or useful knowledge associated with Python, we can write down them in our Blog. Yes, we are planning to use our Blog even though PIC 16B is finished. And WebApp construction is very useful in future career, because we use App every day. Basically, if we want to have a good career, we must build an ability to create WebApp. Now, we learned how to apply database, SQL and machine learning method into WebApp, that helps us to create more useful WebApp in the future.
 
 ## Project Structure
-- **The Project is divided into three parts:**
+**The project is divided into three parts:**
 
-  (1) Data analysis and feature selection
+- Data analysis and feature selection
 
-  (2) Model training and comparison
+- Model training and comparison
 
-  (3) Create the Webapp
+- The webapp of diagnosis
 
 ## 1. Data analysis and feature selection
 First, we are going to load our data and use pairplot to visualize the relationship between the top ten features.
@@ -699,15 +699,15 @@ plt.suptitle("The comparison of 6 Models")
 ![compare.jpg]({{ site.baseurl }}/images/compare.png)
 
 ### My Oberservations:
-- We can observe from the plot that the set that contains all features has the highest accuracy in training and testing. The testing accuracy, 98.6%, is the highest using the Linear Regression model for this set. Cols1 used the 10 best features we selected using SelectKBest, and the testing accuracy is 97.06% using tensorflow. We chose 6 distinct features from cols1 to form cols3, which also has a high testing accuracy.
+- We can observe from the plot that the set that contains all features has the highest accuracy in training and testing. The testing accuracy, 98.6%, is the highest using the logistic regression model for this set. cols1 used the 10 best features we selected using SelectKBest, and the testing accuracy is 97.06% using tensorflow. We chose 6 distinct features from cols1 to form cols3, which also has a high testing accuracy.
 
-- Cols4 is a subset of the set of the 10 best features we selected using SelectKBest. Cols4 consists of the features perimeter_mean, perimeter_worst,area_mean and area_worst. From what we analyzed before we know that the perimeter and the area of a cell has high correlations with each other, so the testing accuracy of cols4 is a bit low, but its testing accuracy is very high. 
+- Cols4 is a subset of the set of the 10 best features we selected using SelectKBest which consists of the features perimeter_mean, perimeter_worst,area_mean and area_worst. From what we analyzed before we know that the perimeter and the area of a cell has high correlations with each other, so the testing accuracy of cols4 is a bit low, but its testing accuracy is very high. 
 
 - For cols5 we chose the features the area_mean,area_worst,concave.points_mean and concave.points_worst. The area of the cell and the number of its concave points have no direct correlations with each other, and they are vastly different in terms of their order of magnitude. However, after standardization, this set of features achieved very high accuracy in both testing and training. In our experiment we can see that this set of features achieved the second or third highest in accuracy using most of our machine learning models.
 
 - Cols2 chose all the mean features in cols1 but gave up on all the worst features. Cols6 only chose 2 features. Compared to other column combinations, their results are a bit lower in accuracy.
 
-- In these 7 distinct machine learning algorithms, we can see the tensorflow has the highest accuracy overall, with an accuracy of 97.66% with cols0, and an accuracy of 97.38% on cols5.
+- In these 7 distinct machine learning algorithms, we can get the tensorflow has the highest accuracy overall, with an accuracy of 97.66% with cols0, and an accuracy of 97.07% on cols5.
 
 - All in all, although using all the 30 features achieves the highest testing accuracy, in practice it is too troublesome to collect 30 features one by one. Thus we choose to use col5, which only chose 4 out of the 30 columns but still achieves high testing accuracy. In our webapp, we only type in the 4 features of cols5 and use it to make predictions using our trained machine learning algorithms. 
 
@@ -777,8 +777,8 @@ def Models():
 # them to g.text1,g.text2,g.text3 and g.text4, they are area_worst,area_mean,
 # concave.points_mean and concave.points_worst. then we fetch the type of the
 # models we selected and retrieve the models which has been trained and saved 
-# from models.ipynb, finally predict whether the The diagnosis of the breast
-# cancer is benign or malignant.
+# from models.ipynb, finally predict the prediction of the breast cancer is 
+# benign or malignant.
 @app.route('/Diagnosis/', methods=['POST', 'GET'])
 def Diagnosis():
     if request.method == 'GET':
@@ -916,6 +916,67 @@ After, we finished our WebApp, we are going to test our WebApp to see if it work
 Here, we jump into the diagnosis page and enter the information of a potential breast cancer patient.
 
 Finally, we get the prediction outcome.
+
+This is the diagnosis page.
+```html
+{%raw%}
+{% extends 'base.html' %}
+{% block header %}
+  <h1>{% block title %}Diagnosis{% endblock %}</h1>
+{% endblock %}
+{% block content %}
+  <form method="post" enctype="multipart/form-data">
+    <h2> Please input data </h2>
+    <label for="text1">area_worst</label>
+    <input type="text1" name="text1" id="text1">
+    <br>
+    <label for="text2">area_mean</label>
+    <input type="text2" name="text2" id="text2">
+    <br>
+    <label for="text3">concave.points_mean</label>
+    <input type="text3" name="text3" id="text3">
+    <br>
+    <label for="text4">concave.points_worst</label>
+    <input type="text4" name="text4" id="text4">
+    <br>
+    <h2> Please select a model </h2>
+    <input type="radio" name="model" id="LR" value="LR">
+    <label for="Logistic Regression">Logistic Regression</label>
+    <br>
+    <input type="radio" name="model" id="DT" value="DT">
+    <label for="Decision Tree">Decision Tree</label>
+    <br>
+    <input type="radio" name="model" id="MLP" value="MLP">
+    <label for="Multilayer Perceptron">Multilayer Perceptron</label>
+    <br>
+    <input type="radio" name="model" id="RF" value="RF">
+    <label for="Random Forest">Random Forest</label>
+    <br>
+    <input type="radio" name="model" id="SVM" value="SVM">
+    <label for="Support Vector Machine">Support Vector Machine</label>
+    <br>
+    <input type="radio" name="model" id="TF" value="TF">
+    <label for="Tensor Flow">Tensor Flow</label>
+    <br>
+    <input type="submit" value="Diagnosis">
+  </form>
+  {% if result1 %}
+    <br>
+    The diagnosis of the breast cancer is malignant.
+    <br>
+  {% endif %}
+  {% if result2 %}
+    <br>
+    The diagnosis of the breast cancer is benign.
+    <br>
+  {% endif %}
+  {% if error %}
+    <br>
+    Oh no, we couldn't use that file!  Please upload an 8x8 numpy array as a text file.
+  {% endif %}
+{% endblock %}
+{%endraw%}
+```
 
 ![diagnosis1.jpg]({{ site.baseurl }}/images/diagnosis1.png)
 
