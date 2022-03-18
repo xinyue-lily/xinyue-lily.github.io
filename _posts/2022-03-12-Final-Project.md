@@ -669,25 +669,9 @@ TF.evaluate(X_test[cols0], y_test, verbose = 2)
 [0.12011773139238358, 0.9707602262496948]
 ```
 
-#### (g) Simplify Our Model
+#### (g) Comparison of model accuracy
 
-Because our data has many columns, so we want to reduce dimensions and compare these models.
-
-First, we create some models.
-```python
-cols0 = df.columns.values.tolist()
-cols0 = cols0[2:32]
-cols1 = ['perimeter_worst','perimeter_mean','area_worst','area_mean','concave.points_mean','concave.points_worst',
-        'radius_worst','radius_mean','concavity_worst','concavity_mean']
-cols2 = ["radius_mean","perimeter_mean","area_mean",'concave.points_mean','concavity_mean']
-cols3 = ['perimeter_worst','perimeter_mean','area_worst','area_mean','concave.points_mean','concave.points_worst']
-cols4 = ['perimeter_worst','perimeter_mean','area_worst','area_mean']
-cols5 = ['area_worst','area_mean','concave.points_mean','concave.points_worst']
-cols6 = ['area_mean','concave.points_mean']
-cols =[cols0,cols1,cols2,cols3,cols4,cols5,cols6]
-```
-
-Plot the graph of accuracy of each model.
+Plot the graph of the training accuracy and testing accuracy of each model.
 ```python
 df1 = pd.read_csv(".\\files\\train_score.csv")
 df2 = pd.read_csv(".\\files\\test_score.csv")
@@ -701,6 +685,19 @@ axes[1].set_xticks(x, labels, rotation=30)
 plt.suptitle("The comparison of 6 Models")
 ```
 ![compare.jpg]({{ site.baseurl }}/images/compare.png)
+
+### My Oberservations:
+- We can observe from the plot that the set that contains all features has the highest accuracy in training and testing. The testing accuracy, 98.6%, is the highest using the Linear Regression model for this set. Cols1 used the 10 best features we selected using SelectKBest, and the testing accuracy is 97.06% using tensorflow. We chose 6 distinct features from cols1 to form cols3, which also has a high testing accuracy.
+
+- Cols4 is a subset of the set of the 10 best features we selected using SelectKBest. Cols4 consists of the features perimeter_mean, perimeter_worst,area_mean and area_worst. From what we analyzed before we know that the perimeter and the area of a cell has high correlations with each other, so the testing accuracy of cols4 is a bit low, but its testing accuracy is very high. 
+
+- For cols5 we chose the features the area_mean,area_worst,concave.points_mean and concave.points_worst. The area of the cell and the number of its concave points have no direct correlations with each other, and they are vastly different in terms of their order of magnitude. However, after standardization, this set of features achieved very high accuracy in both testing and training. In our experiment we can see that this set of features achieved the second or third highest in accuracy using most of our machine learning models.
+
+- Cols2 chose all the mean features in cols1 but gave up on all the worst features. Cols6 only chose 2 features. Compared to other cols, their results are low in accuracy.
+
+- In these 7 distinct machine learning algorithms, we can see the tensorflow has the highest accuracy overall, with an accuracy of 97.66% with cols0, and an accuracy of 97.38% on cols5.
+
+- All in all, although using every one of the 30 features achieves the highest testing accuracy, in practice it is too troublesome to collect 30 features one by one. Thus we choose to use col5, which only chose 4 out of the 30 columns but still achieves high testing accuracy. In our webapp, we only type in the 4 features of cols5 and use it to make predictions using our trained machine learning algorithms. 
 
 ## 3. Third Step: Create Our WebApp
 
