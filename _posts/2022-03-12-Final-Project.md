@@ -40,7 +40,7 @@ The **second** thing we want to improve is the bias. As we mention before, our A
 
   (2) Model training and comparison
 
-  (3) Webapp, identification
+  (3) Create the Webapp
 
 ## 1. Data analysis and feature selection
 First, we are going to load our data and use pairplot to visualize the relationship between the top ten features.
@@ -438,7 +438,7 @@ joblib.dump(SVM, ".\\models\\SVM.m")
 ``` 
 
 #### (f) Tensorflow
-We build a Tensorflow Model with only four features combinations cols5. We calculate the training and testing accuracies and order them by training accuracy.
+We build a Tensorflow Model with only four features combinations of cols5. 
 ```python
 import tensorflow as tf
 from tensorflow import keras
@@ -667,18 +667,19 @@ plt.plot(history.history["accuracy"])
 plt.gca().set(xlabel = "epoch", ylabel = "training accuracy")
 ```
 
-![history1.jpg]({{ site.baseurl }}/images/history1.png)
+![history1.jpg]({{ site.baseurl }}/images/history2.png)
 
 Finally, get our accuracy.
 ```python
-TF.evaluate(X_test[cols5], y_test, verbose = 2)
+TF1.evaluate(X_test[cols5], y_test, verbose = 2)
 ```
 ```python
 [0.12011773139238358, 0.9707602262496948]
 ```
 Save the trained TensorFlow model in models\TF and use it in webapp.
-
+```python
 TF1.save('.\\models\\TF') 
+```
 
 #### (g) Comparison of model accuracy
 
@@ -704,40 +705,29 @@ plt.suptitle("The comparison of 6 Models")
 
 - For cols5 we chose the features the area_mean,area_worst,concave.points_mean and concave.points_worst. The area of the cell and the number of its concave points have no direct correlations with each other, and they are vastly different in terms of their order of magnitude. However, after standardization, this set of features achieved very high accuracy in both testing and training. In our experiment we can see that this set of features achieved the second or third highest in accuracy using most of our machine learning models.
 
-- Cols2 chose all the mean features in cols1 but gave up on all the worst features. Cols6 only chose 2 features. Compared to other cols, their results are low in accuracy.
+- Cols2 chose all the mean features in cols1 but gave up on all the worst features. Cols6 only chose 2 features. Compared to other column combinations, their results are a bit lower in accuracy.
 
 - In these 7 distinct machine learning algorithms, we can see the tensorflow has the highest accuracy overall, with an accuracy of 97.66% with cols0, and an accuracy of 97.38% on cols5.
 
-- All in all, although using every one of the 30 features achieves the highest testing accuracy, in practice it is too troublesome to collect 30 features one by one. Thus we choose to use col5, which only chose 4 out of the 30 columns but still achieves high testing accuracy. In our webapp, we only type in the 4 features of cols5 and use it to make predictions using our trained machine learning algorithms. 
+- All in all, although using all the 30 features achieves the highest testing accuracy, in practice it is too troublesome to collect 30 features one by one. Thus we choose to use col5, which only chose 4 out of the 30 columns but still achieves high testing accuracy. In our webapp, we only type in the 4 features of cols5 and use it to make predictions using our trained machine learning algorithms. 
 
-## 3. Third Step: Create Our WebApp
+## 3. Create Our WebApp
 
 We create a App python file and write down all the codes we need. Also, we write serval HTML pages, and we will show you later.
 
 First, we want to show what's our App python code looks like.
 ```python
 from flask import Flask, g, render_template, request, redirect,url_for
-import sklearn as sk
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import pickle
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
-import io
-import base64
 import joblib
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-
 app = Flask(__name__)
 
-# Create main page (fancy)
-
+# The function gives us the main page of the Webapp.
 @app.route('/', methods=['POST','GET'])
-
 def main():
     if request.method == 'POST':
         # do stuff when the form is submitted
@@ -746,8 +736,9 @@ def main():
         return redirect(url_for('Preprocessing'))
     return render_template('main.html')
 
-# Show url matching
-
+# The function gives us the preprecessing page of the Webapp.
+# Call the template preprecssing.html and show preprocessing page.
+# If we click on the "next" button, We will jump to feature_selection page
 @app.route('/Preprocessing/', methods=['POST','GET'])
 def Preprocessing():
     if request.method == 'POST':
@@ -757,7 +748,9 @@ def Preprocessing():
         return redirect(url_for('Feature_selection'))
     return render_template('Preprocessing.html')
 
-# Page with form
+# The function gives us the feature_selection page of the Webapp.
+# Call the template preprecssing.html and show feature_selection page.
+# If we click on the "next" button, We will jump to Models page
 @app.route('/Feature_selection/', methods=['POST','GET'])
 def Feature_selection():
     if request.method == 'POST':
@@ -767,7 +760,9 @@ def Feature_selection():
         return redirect(url_for('Models'))
     return render_template('Feature_selection.html')
 
-
+# The function gives us the models page of the Webapp.
+# Call the template models.html and show models page.
+# If we click on the "next" button, We will jump to diagnosis page
 @app.route('/Models/', methods=['POST', 'GET'])
 def Models():
     if request.method == 'POST':
@@ -777,22 +772,25 @@ def Models():
         return redirect(url_for('Diagnosis'))
     return render_template('Models.html')
 
-
-# File uploads and interfacing with complex Python
-# basic version
-
+# The function gives us the diagnosis page of the Webapp.
+# Call the template diagnosis.html and fetch the data we inputted and store
+# them to g.text1,g.text2,g.text3 and g.text4, they are area_worst,area_mean,
+# concave.points_mean and concave.points_worst. then we fetch the type of the
+# models we selected and retrieve the models which has been trained and saved 
+# from models.ipynb, finally predict whether the The diagnosis of the breast
+# cancer is benign or malignant.
 @app.route('/Diagnosis/', methods=['POST', 'GET'])
 def Diagnosis():
     if request.method == 'GET':
         return render_template('Diagnosis.html')
     else:
         try:
-            # retrieve the image
-            g.text1 = float(request.form['text1'])
-            g.text2 = float(request.form['text2'])
-            g.text3 = float(request.form['text3'])
-            g.text4 = float(request.form['text4'])
-            #standarize
+            # retrieve the input data
+            g.text1 = float(request.form['text1'])  #area_worst
+            g.text2 = float(request.form['text2'])  #area_mean
+            g.text3 = float(request.form['text3'])  #concave.points_mean
+            g.text4 = float(request.form['text4'])  #concave.points_worst
+            #standarize the input data
             X_value = [g.text1,g.text2,g.text3,g.text4]
             df3 = pd.read_csv(".\\files\\standarize.csv")
             c=["mean","std"]
@@ -800,22 +798,21 @@ def Diagnosis():
             X_value= (X_value-df4["mean"])/df4["std"]
             X_value=np.array(X_value).tolist()
             X_value = [X_value]
-
             g.m = request.form['model']
-            if g.m == "LR":
+            if g.m == "LR":    #if you select Logistic Regression
                 g.model = joblib.load(".\\models\\LR.m") 
-            elif g.m == "DT":
+            elif g.m == "DT":  #if you select Decision Tree
                 g.model = joblib.load(".\\models\\DT.m")
-            elif g.m == "MLP":
+            elif g.m == "MLP": #if you select MultilayerPerceptron
                 g.model = joblib.load(".\\models\\MLP.m")
-            elif g.m == "RF":
+            elif g.m == "RF":  #if you select Random Forest
                 g.model = joblib.load(".\\models\\RF.m")
-            elif g.m == "SVM":
+            elif g.m == "SVM":  #if you select Support Vector Machine
                 g.model = joblib.load(".\\models\\SVM.m")
-            else:
+            else:               #if you select Tensor Flow
                 g.model = tf.keras.models.load_model(".\\models\\TF")
-                        
-            if g.m != 'TF':
+            #predict the result
+            if g.m != 'TF': 
                 g.result = g.model.predict(X_value)[0]
             else:
                 g.result = g.model.predict(X_value)[0][1]
@@ -825,9 +822,10 @@ def Diagnosis():
             else:
                 r2 = 1
                 r1 = 0
-            return render_template('Diagnosis.html', result1 = r1, result2 = r2)
+            return render_template('Diagnosis.html', result1 = r1,
+                                    result2 = r2)
         except:
-            return render_template('Diagnosis.html', error=True)
+            return render_template('Diagnosis.html', error=True)           
 ```
 
 Then, we want to show you serval HTML raw code we created.
@@ -837,48 +835,40 @@ This is the preprocessing page.
 ```html
 {%raw%}
 {% extends 'base.html' %}
-
 {% block header %}
   <h1>{% block title %}Preprocessing{% endblock %}</h1>
 {% endblock %}
-
 {% block content %}
 <h2> Preprocessing </h2>
   <ul>
     <li>LabelEncoder</li>
     <li>Standarization</li>
   </ul>
-
 <div align = center>
-  <img src="https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/analyse_scaled_ra.jpg" width="864px" height="360px">
-
+  <img src="https://raw.githubusercontent.com/xinyudong1129/xinyudong1129.
+  github.io/master/images/analyse_scaled_ra.jpg" width="864px" height="360px">
   <p>  The comparison diagram of TNE before and after standarization</p>
-
-  <img src="https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/TSNE_TSNE_scaled.png" width="702px" height="280px">
+  <img src="https://raw.githubusercontent.com/xinyudong1129/xinyudong1129.
+  github.io/master/images/TSNE_TSNE_scaled.png" width="702px" height="280px">
 </div>
-
 <p></p>
 <p></p>
 <p></p>
 <form method="post">
    <button type="submit">Next Page</button>
 </form>
-
 {% endblock %}
 {%endraw%}
 ```
-
 ![preprocessing.jpg]({{ site.baseurl }}/images/preprocessing.png)
 
 This is the models page.
 ```html
 {%raw%}
 {% extends 'base.html' %}
-
 {% block header %}
   <h1>{% block title %}Models{% endblock %}</h1>
 {% endblock %}
-
 {% block content %}
 <h2> Models </h2>
   <ul>
@@ -889,31 +879,30 @@ This is the models page.
     <li>Support Vector Machine</li>
     <li>Tensor Flow</li>
   </ul>
-
   <h2> Features </h2>
   <ul>
     <li>cols0 = all features
-    <li>cols1 = ['perimeter_worst','perimeter_mean','area_worst','area_mean','concave.points_mean','concave.points_worst',
-                'radius_worst','radius_mean','concavity_worst','concavity_mean']</li> 
-    <li>cols2 = ["radius_mean","perimeter_mean","area_mean",'concave.points_mean','concavity_mean']</li>
-    <li>cols3 = ['perimeter_worst','perimeter_mean','area_worst','area_mean','concave.points_mean','concave.points_worst']</li>
+    <li>cols1 = ['perimeter_worst','perimeter_mean','area_worst','area_mean',
+        'concave.points_mean','concave.points_worst','radius_worst',
+        'radius_mean','concavity_worst','concavity_mean']</li> 
+    <li>cols2 = ['radius_mean','perimeter_mean','area_mean',
+        'concave.points_mean','concavity_mean']</li>
+    <li>cols3 = ['perimeter_worst','perimeter_mean','area_worst','area_mean',
+        'concave.points_mean','concave.points_worst']</li>
     <li>cols4 = ['perimeter_worst','perimeter_mean','area_worst','area_mean']</li>
     <li>cols5 = ['area_worst','area_mean','concave.points_mean','concave.points_worst']</li>
     <li>cols6 = ['area_mean','concave.points_mean']</li>
   </ul>
-
 <div align = center>
-  <img src="https://raw.githubusercontent.com/xinyue-lily/xinyue-lily.github.io/master/images/models.png" width="826px" height="660px">
-
+  <img src="https://raw.githubusercontent.com/xinyudong1129/xinyudong1129.
+        github.io/master/images/models.png" width="826px" height="660px">
 </div>
-
 <p></p>
 <p></p>
 <p></p>
 <form method="post">
    <button type="submit">Next Page</button>
 </form>
-
 {% endblock %}
 {%endraw%}
 ```
@@ -931,8 +920,6 @@ Finally, we get the prediction outcome.
 ![diagnosis1.jpg]({{ site.baseurl }}/images/diagnosis1.png)
 
 ![diagnosis2.jpg]({{ site.baseurl }}/images/diagnosis2.png)
-
-
 
 
 > This is all about our project, if you want to get more information of our project and see how it works in detail. Please visit our Github Repository. Here is the link [https://github.com/panxinming/PIC16B-Proposal](https://github.com/panxinming/PIC16B-Proposal)
