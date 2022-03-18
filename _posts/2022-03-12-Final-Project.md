@@ -54,7 +54,7 @@ sns.pairplot(df[cols],hue='diagnosis', height=1.5)
 
 The plots on the diagonal line describes the distribution of individual features in each category, and the plots in the upper triangle and the lower triangle illustrate the pairwise relationships between different features. It is obvious that there is strong correlation between the radius, the perimeter, and the area. In data analysis we only need to keep one of such features so that the features are independent to one another. By observation, we can also know that there is a linear relationship between the concavity and the concave point, and between the concavity and the compactness.
 
-### (a) Standardization
+### (1) Standardization
 The data type of tag diagnosis is character, "B" indicates benign and "m" indicates malignant. Use labelencoder to digitize it and encode the tag value as 0,1, so that it can be used as the training tag of the model.
 
 Every original data set may have differences in orders in dimension and different magnitudes. If we do not make modifications to them and use the original value directly, this will highlight the role of the features with higher numerical value in the analysis and weaken the role of the features with lower numerical value. To ensure the reliability of our results, we need to standardize the original data. After standardization, every feature has a mean of 0 and a standard deviation of 1.
@@ -68,7 +68,25 @@ X_mean=X.mean(axis=0)
 X_std=X.std(axis=0)
 X_scaled= (X-X_mean)/X_std
 ```
-We choose six features, including two mean features, two variance features and two maximum features. These three types of data are different in terms of properties and magnitudes. Before we standardize the features of datasets, we can observe, as shown in the graph on the left, that the standard deviation feature value distribution is concentrated in a small interval with a small value. The mean feature distribution, however, is wide and the value is large. As shown in the right figure. After standardization, the distribution of features falls into the same interval, which ensures the reliability of classification.
+We drawed TSNE diagrams for the original dataset and the dataset after standardization. 
+```python
+f, axes = plt.subplots(1, 2, figsize=(12,4))
+tsne = TSNE(n_components=2, perplexity = 50)
+dataset_tsne = tsne.fit_transform(X)
+dataset_scaled = tsne.fit_transform(X_scaled)
+ax1 = axes[0].scatter(dataset_tsne[:, 0], dataset_tsne[:, 1], c = y, alpha = 0.7,cmap="jet")
+ax2 = axes[1].scatter(dataset_scaled[:, 0], dataset_scaled[:, 1], c = y, alpha = 0.7,cmap="jet")
+axes[0].set(title = "Orignal Dataset")
+axes[1].set(title = "Scaled Dataset")
+f.colorbar(ax1, ax = axes[0])
+f.colorbar(ax2, ax = axes[1])
+plt.suptitle('perplexity = 50',ha='center')
+```
+![TSNE.png]({{ site.baseurl }}/images/TSNE_TSNE_scaled.png)
+
+We can see from the plot that the sample separation has greatly improved.
+
+Next, We choose six features, including two mean features, two variance features and two maximum features. These three types of data are different in terms of properties and magnitudes. Before we standardize the features of datasets, we can observe, as shown in the graph on the left, that the standard deviation feature value distribution is concentrated in a small interval with a small value. The mean feature distribution, however, is wide and the value is large. As shown in the right figure. After standardization, the distribution of features falls into the same interval, which ensures the reliability of classification.
 
 ```python
 # Draw the comparison diagram of KDE before and after standardization
@@ -86,10 +104,8 @@ plt.suptitle('The comparison diagram of KDE before and after standardization',ha
 ```
 ![kde.png]({{ site.baseurl }}/images/kde.png)
 
-The next, We draw TSNE diagrams for the original dataset and the dataset after standardization. We can see from the plot that the sample separation has greatly improved.
-![TSNE.png]({{ site.baseurl }}/images/TSNE_TSNE_scaled.png)
 
-### (b) Feature Selection
+### (2) Feature Selection
 Feature selection is the process of selecting the most effective features form a pool of original features to reduce data dimension. Since this dataset has many features, feature selection is a good way to improve the performance of the machine learning algorithm.
 
 SelectKBest selects the best characteristics and uses analysis of variance to calculate feature scores. In general, variance analysis is to test whether a random variable has gone through significant changes if it is tested under different levels. This is used to test the correlation between two variables. 
@@ -115,34 +131,54 @@ It is clear that the mean and maximum values of the radius, perimeter, area, con
 
 ## 2. Model training and comparison
 
-Firstly, we write a funtion which can help us standarize and clean our data.
+### (1) Data Preparation
+Firstly, we split our data into training and testing.
 ```python
-def clean_data(df1):
-    encoder = preprocessing.LabelEncoder().fit(df1['diagnosis'])
-    df1['diagnosis'] = encoder.transform(df1['diagnosis'])
-    df1 = df1.dropna()
-    X = df1.drop(['diagnosis'],axis = 1)
-    y = df1['diagnosis']
-    #standarization
-    X_mean=X.mean(axis=0)
-    X_std=X.std(axis=0)
-    X= (X-X_mean)/X_std
-    df2 = pd.concat([y,X],axis=1)
-    return df2  
-dataset = clean_data(df)
-```
-Then, we split our data into training and testing.
-```python
+dataset = pd.concat([y,X],axis=1)
 train,test=train_test_split(dataset,test_size=.3,random_state=42)
 
 X_train=train.drop(['diagnosis'],axis = 1)
 y_train=train['diagnosis']
-
 X_test=test.drop(['diagnosis'],axis = 1)
 y_test=test['diagnosis']
 ```
+we choose seven different combinations of columns and use them to do the comparison test.
 
-Then, we write two functions to prepare to find the confusion matrix and column score.
+- ***cols0***: all the ***30*** features combination.
+
+- ***cols1***: ***10*** features combination using *selectKBest*.
+
+- ***cols2***: ***5*** mean features combination: *radius_mean,perimeter_mean,area_mean,concave.points_mean and concavity_mean*.
+
+- ***cols3***: ***6*** features combination: *perimeter_worst,perimeter_mean,area_worst,area_mean,concave.points_mean and concave.points_worst*.
+
+- ***cols4***: ***4*** features combination: *perimeter_worst,perimeter_mean,area_worst and area_mean*.
+
+- ***cols5***: ***4*** features combination: *area_worst,area_mean,concave.points_mean and concave.points_worst*.
+
+- ***cols6***: ***2*** features combination: *area_mean and concave.points_mean*.
+
+```python
+cols0 = df.columns.values.tolist()
+cols0 = cols0[2:32]
+cols1 = ['perimeter_worst','perimeter_mean','area_worst','area_mean',
+         'concave.points_mean','concave.points_worst','radius_worst',
+         'radius_mean','concavity_worst','concavity_mean']
+cols2 = ['radius_mean','perimeter_mean','area_mean','concave.points_mean',
+         'concavity_mean']
+cols3 = ['perimeter_worst','perimeter_mean','area_worst','area_mean',
+         'concave.points_mean','concave.points_worst']
+cols4 = ['perimeter_worst','perimeter_mean','area_worst','area_mean']
+cols5 = ['area_worst','area_mean','concave.points_mean','concave.points_worst']
+cols6 = ['area_mean','concave.points_mean']
+cols =[cols0,cols1,cols2,cols3,cols4,cols5,cols6]
+```
+### (2) Two General Functions
+
+- plot_confusionmatrix：plots the confusion matrix of a model.
+
+- check_column_score：sorts the training average accuracy of all the feature combinations by cross validation, then show the top n column combinations and their train score and test score.
+
 ```python
 def plot_confusionmatrix(model,Xt,yt):
     """
@@ -183,7 +219,8 @@ def check_column_score(clf):
         print(" Train score is:"+str(np.round(value,3)) + " --- Test score is:"+ str(j))
 ```
 
-### (a). Logistic Regression
+### (3) Train models and save the models
+#### (a) Logistic Regression
 ```python
 from sklearn.linear_model import LogisticRegression
 LR = LogisticRegression()
@@ -223,7 +260,7 @@ joblib.dump(LR, ".\\models\\LR.m")
 ``` 
 Save the trained logistic regression model to .\\models\\LR.m so that it can be called in webapp.
 
-### (b). Dicision Tree
+#### (b) Dicision Tree
 ```python
 from sklearn.tree import DecisionTreeClassifier
 DT = DecisionTreeClassifier(max_depth = 12, criterion = 'entropy')
@@ -260,7 +297,7 @@ plot_confusionmatrix(DT,X_test[cols5],y_test)
 ![confusion2.jpg]({{ site.baseurl }}/images/confusion2.png)
 
 
-### (c). Neural Networks
+#### (c) Neural Networks
 ```python
 MLP = MLPClassifier(solver='adam', activation = 'relu', alpha=1e-5,max_iter=3000,
                      hidden_layer_sizes= (18,18,18),random_state=1)
@@ -297,7 +334,7 @@ plot_confusionmatrix(MLP,X_test[cols5],y_test)
 ![confusion3.jpg]({{ site.baseurl }}/images/confusion3.png)
 
 
-### (d). Random Forest
+#### (d) Random Forest
 ```python
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
@@ -334,7 +371,7 @@ plot_confusionmatrix(RF,X_test[cols5],y_test)
 ![confusion4.jpg]({{ site.baseurl }}/images/confusion4.png)
 
 
-### (e). SVM
+#### (e) SVM
 ```python
 SVM = SVC(kernel = 'rbf',C=1E6,gamma = 0.005)
 check_column_score(SVM)
@@ -369,7 +406,7 @@ plot_confusionmatrix(SVM,X_test[cols5],y_test)
 ![confusion5.jpg]({{ site.baseurl }}/images/confusion5.png)
 
 
-### (f). Tensorflow
+#### (f) Tensorflow
 ```python
 import tensorflow as tf
 from tensorflow import keras
@@ -632,7 +669,7 @@ TF.evaluate(X_test[cols0], y_test, verbose = 2)
 [0.12011773139238358, 0.9707602262496948]
 ```
 
-### (g). Simplify Our Model
+#### (g) Simplify Our Model
 
 Because our data has many columns, so we want to reduce dimensions and compare these models.
 
