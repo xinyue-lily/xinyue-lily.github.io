@@ -707,7 +707,7 @@ plt.suptitle("The comparison of 6 Models")
 
 - Cols2 chose all the mean features in cols1 but gave up on all the worst features. Cols6 only chose 2 features. Compared to other column combinations, their results are a bit lower in accuracy.
 
-- In these 7 distinct machine learning algorithms, we can get the tensorflow has the highest accuracy overall, with an accuracy of 97.66% with cols0, and an accuracy of 97.07% on cols5.
+- In these six distinct machine learning algorithms, we can get the tensorflow has the highest accuracy overall, with an accuracy of 97.66% with cols0, and an accuracy of 97.07% on cols5.
 
 - All in all, although using all the 30 features achieves the highest testing accuracy, in practice it is too troublesome to collect 30 features one by one. Thus we choose to use col5, which only chose 4 out of the 30 columns but still achieves high testing accuracy. In our webapp, we only type in the 4 features of cols5 and use it to make predictions using our trained machine learning algorithms. 
 
