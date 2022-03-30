@@ -68,6 +68,42 @@ X_mean=X.mean(axis=0)
 X_std=X.std(axis=0)
 X_scaled= (X-X_mean)/X_std
 ```
+We drawed TSNE diagrams for the original dataset and the dataset after standardization. 
+```python
+f, axes = plt.subplots(1, 2, figsize=(12,4))
+tsne = TSNE(n_components=2, perplexity = 50)
+dataset_tsne = tsne.fit_transform(X)
+dataset_scaled = tsne.fit_transform(X_scaled)
+ax1 = axes[0].scatter(dataset_tsne[:, 0], dataset_tsne[:, 1], c = y, alpha = 0.7,cmap="jet")
+ax2 = axes[1].scatter(dataset_scaled[:, 0], dataset_scaled[:, 1], c = y, alpha = 0.7,cmap="jet")
+axes[0].set(title = "Orignal Dataset")
+axes[1].set(title = "Scaled Dataset")
+f.colorbar(ax1, ax = axes[0])
+f.colorbar(ax2, ax = axes[1])
+plt.suptitle('perplexity = 50',ha='center')
+```
+![TSNE.png]({{ site.baseurl }}/images/TSNE_TSNE_scaled.png)
+
+We can see from the plot that the sample separation has greatly improved.
+
+Next, We choose six features, including two mean features, two variance features and two maximum features. These three types of data are different in terms of properties and magnitudes. Before we standardize the features of datasets, we can observe, as shown in the graph on the left, that the standard deviation feature value distribution is concentrated in a small interval with a small value. The mean feature distribution, however, is wide and the value is large. As shown in the right figure. After standardization, the distribution of features falls into the same interval, which ensures the reliability of classification.
+
+```python
+# Draw the comparison diagram of KDE before and after standardization
+features = df.columns.values.tolist()
+features = features[2:32]
+fig,axes = plt.subplots(1, 2, figsize = (12, 5), sharex=False)
+for i in [0, 1, 10, 11, 20, 21]: 
+    sns.kdeplot(X.iloc[:,i], label=features[i], shade=True, ax=axes[0])
+    sns.kdeplot(X_scaled.iloc[:, i], label=features[i], shade=True, ax=axes[1])
+axes[0].set(title = "Orignal Dataset")
+axes[1].set(title = "Scaled Dataset")
+axes[0].legend()
+axes[1].legend()
+plt.suptitle('The comparison diagram of KDE before and after standardization',ha='center')
+```
+![kde.png]({{ site.baseurl }}/images/kde.png)
+
 
 ### (2) Feature Selection
 Feature selection is the process of selecting the most effective features form a pool of original features to reduce data dimension. Since this dataset has many features, feature selection is a good way to improve the performance of the machine learning algorithm.
